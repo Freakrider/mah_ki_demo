@@ -58,8 +58,8 @@ def llmCall(query):
 
 @app.route('/api/moodle', methods=['POST'])
 def llmCall2():
-    data = request.get_json()
-    query = data["prompt"]
+    #data = request.get_json()
+    query = "Suche OErsi nach Moodle"#data["prompt"]
 
     from langchain_experimental.llms.ollama_functions import OllamaFunctions
     from langchain_core.utils.function_calling import convert_to_openai_function
@@ -113,30 +113,60 @@ def llmCall2():
     # Print the user response
     print(function_result)
 
-    model = OllamaFunctions(
-        model="llama3",
-        )
+    def format_to_markdown(results):
+        if "error" in results:
+            return f"**Error:** {results['error']} (Status Code: {results['status_code']})"
 
+        markdown_output = "# Search Results\n"
+        hits = results.get('hits', {}).get('hits', [])
 
-    supervisor_template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
-    You are a Presenter you should present the information from a function to the user in Markdown format.
+        for hit in hits:
+            source = hit.get('_source', {})
+            name = source.get('name', 'No Title')
+            description = source.get('description', 'No Description')
+            keywords = ', '.join(source.get('keywords', []))
+
+            markdown_output += f"## {name}\n\n"
+            markdown_output += f"**Description:** {description}\n\n"
+            markdown_output += f"**Keywords:** {keywords}\n\n"
+            markdown_output += "---\n\n"
+
+        return markdown_output
     
-    Result from the function: {function_result}
+    formatted_markdown = format_to_markdown(function_result)
 
+    # LLM-Call
+    model = ChatOpenAI(
+        model_name="llama3:instruct",
+        openai_api_base="http://localhost:11434/v1",
+        temperature=0,
+        api_key="llama3:instruct"
+    )
 
-    <|eot_id|><|start_header_id|>user<|end_header_id|>"""
-
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", supervisor_template),
-        MessagesPlaceholder(variable_name="input"),
-    ]).partial(function_result=str(function_result))
-
+    # LLM-Call für die Ausgabe
+    response = model.invoke(input=formatted_markdown)
+    print(response)
+    # supervisor_template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+    # You are a Presenter you should present the information from a function to the user in Markdown format.
     
-    chain = prompt | model | StrOutputParser()
-    res = chain.invoke({"input": query })
-    respObj = {"response": res, "sourceDocuments": []}
+    # Result from the function: {function_result}
+
+
+    # <|eot_id|><|start_header_id|>user<|end_header_id|>
+    # {input}
+    # <|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
+
+    # prompt = ChatPromptTemplate.from_messages([
+    #     ("system", supervisor_template),
+    #     MessagesPlaceholder(variable_name="input"),
+    #     (
+    #         "system",
+    #         "Given the conversation above use the result from the function und present it to the user?",
+    #     ),
+    # ]).partial(function_result=str(function_result))
+    respObj = {"response": response, "sourceDocuments": []}
     response = make_response(jsonify(respObj), 200)
-    return response
+    return "ol"
 
     
 
@@ -167,4 +197,5 @@ def display_graph(graph):
 if __name__ == '__main__':
     # res = agent_system("Call Oersi and search for Generative KI.")
     # print(res)
+    #print(llmCall2())
     app.run(debug=FLASK_DEBUG, ssl_context='adhoc')
