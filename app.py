@@ -12,6 +12,7 @@ from langchain_core.tools import tool
 from tools import oersi_search
 from graph import create_workflow, stream_graph
 from IPython.display import Image, display
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 import getpass
 import os
@@ -46,7 +47,7 @@ def llmCall(query):
 
     """
     prompt = ChatPromptTemplate.from_template("{query}")
-
+    
     model = ChatOpenAI() 
     #If you want to use a local API, you can use the following code with something like lm Studio or ollama: 
     #ChatOpenAI(base_url="http://localhost:1234/v1",temperature=0, api_key="not-needed")
@@ -111,7 +112,29 @@ def llmCall2():
 
     # Print the user response
     print(function_result)
-    respObj = {"response": function_result, "sourceDocuments": []}
+
+    model = OllamaFunctions(
+        model="llama3",
+        )
+
+
+    supervisor_template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+    You are a Presenter you should present the information from a function to the user in Markdown format.
+    
+    Result from the function: {function_result}
+
+
+    <|eot_id|><|start_header_id|>user<|end_header_id|>"""
+
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", supervisor_template),
+        MessagesPlaceholder(variable_name="input"),
+    ]).partial(function_result=str(function_result))
+
+    
+    chain = prompt | model | StrOutputParser()
+    res = chain.invoke({"input": query })
+    respObj = {"response": res, "sourceDocuments": []}
     response = make_response(jsonify(respObj), 200)
     return response
 
