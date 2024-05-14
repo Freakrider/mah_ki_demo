@@ -58,8 +58,9 @@ def llmCall(query):
 
 @app.route('/api/moodle', methods=['POST'])
 def llmCall2():
-    #data = request.get_json()
-    query = "Suche OErsi nach Moodle"#data["prompt"]
+    data = request.get_json()
+    print(data)
+    query = data["prompt"]
 
     from langchain_experimental.llms.ollama_functions import OllamaFunctions
     from langchain_core.utils.function_calling import convert_to_openai_function
@@ -197,5 +198,5 @@ def display_graph(graph):
 if __name__ == '__main__':
     # res = agent_system("Call Oersi and search for Generative KI.")
     # print(res)
-    #print(llmCall2())
-    app.run(debug=FLASK_DEBUG, ssl_context='adhoc')
+    app.run(debug=FLASK_DEBUG)
+    # , ssl_context='adhoc'
