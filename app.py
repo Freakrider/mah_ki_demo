@@ -56,7 +56,7 @@ def llmCall(query):
     return result
 
 @app.route('/api/moodle', methods=['POST'])
-def llmCall2(query):
+def llmCall2():
     data = request.get_json()
     query = data["prompt"]
 
