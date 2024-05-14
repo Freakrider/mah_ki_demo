@@ -111,7 +111,8 @@ def llmCall2(query):
 
     # Print the user response
     print(function_result)
-    response = make_response(jsonify(function_result), 200)
+    respObj = {"response": function_result, "sourceDocuments": []}
+    response = make_response(jsonify(respObj), 200)
     return response
 
     
