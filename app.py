@@ -1,25 +1,18 @@
 from flask import Flask, jsonify, make_response, request
 from flask_cors import CORS
 from langchain_core.messages import HumanMessage
-
 from langchain_openai import ChatOpenAI
-from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.utils.function_calling import convert_to_openai_function
-from langchain_core.messages import AIMessage
-from langchain_core.tools import tool
 from tools import oersi_search
 from graph import create_workflow, stream_graph
 from IPython.display import Image, display
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.prompts import ChatPromptTemplate
 
-import getpass
 import os
 from dotenv import load_dotenv
 load_dotenv()
 
-import requests
 # Umgebungsvariablen für die Konfiguration
 FLASK_DEBUG = os.getenv('FLASK_DEBUG', 'false').lower() in ['true', '1']
 
@@ -65,17 +58,16 @@ def llmCall2():
     from langchain_experimental.llms.ollama_functions import OllamaFunctions
     from langchain_core.utils.function_calling import convert_to_openai_function
 
-    from tools import final_answer_tool,oersi_search, save_as_txt
+    from tools import final_answer_tool, oersi_search, save_as_txt
 
     model = OllamaFunctions(
         model="llama3", 
         format="json"
-        )
+    )
 
     tools = [oersi_search, final_answer_tool, save_as_txt]
     tool_definitions = [convert_to_openai_function(t) for t in tools]
-    model.bind_tools
-    model = model.bind_tools(
+    model_with_function = model.bind_tools(
         tools=tool_definitions
     )
 
@@ -86,33 +78,58 @@ def llmCall2():
         "oersi_search": oersi_search
     }
 
-    response = model.invoke(query)
+    try:
+        response = model_with_function.invoke(query)
+    except KeyError as e:
+        respObj = {"response": f"Error in model invocation: {e} because of userinput {query}", "sourceDocuments": []}
+        response = make_response(jsonify(respObj), 200)
+        return response
 
     import json
+    response.pretty_print()
+
+    # Check if the 'tool' key exists before accessing it
+    if "function_call" in response.additional_kwargs:
+        function_call = response.additional_kwargs["function_call"]
+    else:
+        print("'function_call' key is missing in the response.additional_kwargs")
+        respObj = {"response": f"'function_call' key is missing in the response.additional_kwargs because of userinput {query}", "sourceDocuments": []}
+        response = make_response(jsonify(respObj), 200)
+        return response
 
     # Extract the function name and arguments from the response
-    function_call = response.additional_kwargs.get("function_call")
     function_name = function_call.get("name")
-    arguments = function_call.get("arguments")
-
-    # Convert arguments to a dictionary if it's a string
-    if isinstance(arguments, str):
-        arguments = json.loads(arguments)
-
-    # Check if the function name exists in the mapping
-    if function_name in function_mapping:
-        # If 'answer' is in arguments, just print 'answer'
-        if 'answer' in arguments:
-            function_result = model(arguments['answer'])
-        else:
-            # Call the corresponding function with the arguments
-            function = function_mapping[function_name]
-            function_result = function.invoke(input = arguments)
-    else:
-        function_result = "Function not found in the mapping."
+    arguments = function_call.get("arguments", {})
 
     # Print the user response
     print(function_call)
+    print("_------------------_")
+    print(arguments)
+
+    # Convert arguments to a dictionary if it's a string
+    if isinstance(arguments, str):
+        try:
+            arguments = json.loads(arguments)
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON: {e}")
+            return make_response(jsonify({"error": "Invalid JSON arguments"}), 400)
+
+    # Check if the function name exists in the mapping
+    if function_name in function_mapping:
+        try:
+            # If 'answer' is in arguments, just print 'answer'
+            if 'answer' in arguments:
+                function_result = arguments['answer']
+            else:
+                # Call the corresponding function with the arguments
+                function = function_mapping[function_name]
+                function_result = function.invoke(input=arguments)
+        except Exception as e:
+            print(f"Error invoking function '{function_name}': {e}")
+            function_result = f"Error invoking function '{function_name}': {str(e)}"
+    else:
+        function_result = "Function not found in the mapping."
+
     print("_------------------_")
     print(function_result)
 
@@ -120,17 +137,14 @@ def llmCall2():
     response = make_response(jsonify(respObj), 200)
     return response
 
-    
-
-
 @app.route('/api/agent', methods=['POST'])
-def agent_system(query):#todo query raus
+def agent_system(query): #todo query raus
     # data = request.get_json()
     # query = data["prompt"]
 
     graph = create_workflow()
     display_graph(graph)
-    inputs ={"messages": [HumanMessage(content=query)]}
+    inputs = {"messages": [HumanMessage(content=query)]}
     output = stream_graph(graph, inputs)
 
     return output

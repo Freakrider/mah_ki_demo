@@ -130,6 +130,7 @@ def final_answer_tool(
 ):
     """Returns a natural language response to the user in `answer`, and a
     `source` which provides citations for where this information came from.
+    Use it if no other tool is applicable.
     """
     return ""
 
