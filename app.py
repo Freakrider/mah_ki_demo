@@ -9,8 +9,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.utils.function_calling import convert_to_openai_function
 from langchain_core.messages import AIMessage
 from langchain_core.tools import tool
-from tools import oersiSearch
+from tools import oersi_search
 from graph import create_workflow, stream_graph
+from IPython.display import Image, display
 
 import getpass
 import os
@@ -28,7 +29,7 @@ CORS(app, supports_credentials=True)
 def plainoersi():
     data = request.get_json()
     query = data["prompt"]
-    search_result = oersiSearch(query)
+    search_result = oersi_search(query)
     response = make_response(jsonify(search_result), 200)
     return response
 
@@ -60,12 +61,24 @@ def agent_system(query):#todo query raus
     # query = data["prompt"]
 
     graph = create_workflow()
+    display_graph(graph)
     inputs ={"messages": [HumanMessage(content=query)]}
     output = stream_graph(graph, inputs)
 
     return output
 
+def display_graph(graph):
+    graph_image_path = os.path.join("output", "graph_visualization.png")
+    try:
+        graph_image = graph.get_graph(xray=True).draw_mermaid_png()
+        with open(graph_image_path, "wb") as f:
+            f.write(graph_image)
+        display(Image(graph_image))  # Anzeigen des Graphen im Jupyter Notebook
+        print(f"Graph visualized and saved as PNG at '{graph_image_path}'")
+    except Exception as e:
+        print(f"Failed to create or display graph: {e}")
+
 if __name__ == '__main__':
-    res = agent_system("Call Oersi and search for Moodle.")
+    res = agent_system("Call Oersi and search for Generative KI.")
     print(res)
     app.run(debug=FLASK_DEBUG, ssl_context='adhoc')

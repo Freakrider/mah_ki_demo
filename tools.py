@@ -2,21 +2,8 @@ import os
 import requests
 from langchain_core.tools import tool
 
-@tool
-def return_text(text):
-    """
-    Returns the input text.
-    
-    Parameters:
-        text (str): The input text to be returned.
-    
-    Returns:
-        str: The input text.
-    """
-    return text
-
-@tool
-def oersiSearch(prompt):
+@tool("oersi_search")
+def oersi_search(prompt ):
     """
     Perform a search on the OERSI API based on the given prompt for the Fields name, description, and keywords.
 
@@ -53,7 +40,17 @@ def oersiSearch(prompt):
     else:
         return {"error": "API request failed", "status_code": response.status_code}
 
-@tool
+@tool("final_answer")
+def final_answer_tool(
+    answer: str,
+    source: str
+):
+    """Returns a natural language response to the user in `answer`, and a
+    `source` which provides citations for where this information came from.
+    """
+    return ""
+
+@tool("save_as_txt")
 def save_as_txt(title="", data=""):
     """
     Save the given data as a text file with the specified title.
@@ -70,3 +67,5 @@ def save_as_txt(title="", data=""):
         os.makedirs(folder_path)
     with open(f"{folder_path}/{title}.txt", "w") as file:
         file.write(data)
+
+    return "Data saved successfully."

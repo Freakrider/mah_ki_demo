@@ -13,16 +13,22 @@ def validate_state(state: Dict[str, Any]) -> None:
         raise ValueError("State must have a 'messages' key with list of messages.")
 
 def stream_graph(graph, inputs: Any) -> Any:
-    try:
-        # for output in graph.stream(inputs, {"recursion_limit": 100}):
-        #     print("Output received:", output)
-        #     for key, value in output.items():
-        #         print(f"Finished running: {key}: {value}")
-        #         if isinstance(value, dict) and "generation" in value:
-        #             print(value["generation"])
-        #         else:
-        #             print("Unexpected value type or structure:", value)
-        output = graph.invoke(inputs, {"recursion_limit": 100})
+    try:  
+        print("Starting to stream graph with inputs:", inputs)
+        for output in graph.invoke(inputs, {"recursion_limit": 100}):
+            print("Output received:", output)
+            for key, value in output.items():
+                print(f"Finished running: {key}: {value}")
+                # Verbesserte Überprüfung der erwarteten Schlüssel
+                if key == "output" and isinstance(value, dict) and "tool" in value:
+                    print("Tool in output:", value["tool"])
+                else:
+                    print("Tool key missing or incorrect structure:", value)
+    except KeyError as e:
+        print("KeyError encountered during streaming:", e)
+        print("A KeyError occurred - likely missing a key in the response. Adjusting...")
+        # Sicherheitsmaßnahmen oder Logging können hier eingefügt werden
+        raise
     except Exception as e:
         print("Error encountered during streaming:", e)
         raise e

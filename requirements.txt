@@ -9,3 +9,5 @@ langchain_community
 langchain_openai
 langchain-groq
 langchain_experimental
+IPython
+langchainhub
