@@ -1,7 +1,7 @@
 from langchain_experimental.llms.ollama_functions import OllamaFunctions
 from langchain_core.utils.function_calling import convert_to_openai_function
 
-from tools import final_answer_tool,oersi_search, save_as_txt
+from app.tools import final_answer_tool,oersi_search, save_as_txt
 
 model = OllamaFunctions(
     model="llama3", 
