@@ -48,6 +48,7 @@ Um `mah_ki_demo` auf Ihrem Rechner zu installieren und einzurichten, folgen Sie 
 
     ```env
     FLASK_DEBUG=true
+    FLASK_APP=app
     ```
 
 ## Benutzung
