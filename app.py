@@ -55,6 +55,68 @@ def llmCall(query):
     result = chain.invoke({"query": query})
     return result
 
+@app.route('/api/moodle', methods=['POST'])
+def llmCall(query):
+    data = request.get_json()
+    query = data["prompt"]
+
+    from langchain_experimental.llms.ollama_functions import OllamaFunctions
+    from langchain_core.utils.function_calling import convert_to_openai_function
+
+    from tools import final_answer_tool,oersi_search, save_as_txt
+
+    model = OllamaFunctions(
+        model="llama3", 
+        format="json"
+        )
+
+    tools = [oersi_search, final_answer_tool, save_as_txt]
+    tool_definitions = [convert_to_openai_function(t) for t in tools]
+    model.bind_tools
+    model = model.bind_tools(
+        tools=tool_definitions
+    )
+
+    # Dictionary mapping function names to their corresponding functions
+    function_mapping = {
+        "final_answer": final_answer_tool,
+        "save_as_txt": save_as_txt,
+        "oersi_search": oersi_search
+    }
+
+    response = model.invoke(query)
+
+    import json
+
+    # Extract the function name and arguments from the response
+    function_call = response.additional_kwargs.get("function_call")
+    function_name = function_call.get("name")
+    arguments = function_call.get("arguments")
+
+    # Convert arguments to a dictionary if it's a string
+    if isinstance(arguments, str):
+        arguments = json.loads(arguments)
+
+    # Check if the function name exists in the mapping
+    if function_name in function_mapping:
+        # If 'answer' is in arguments, just print 'answer'
+        if 'answer' in arguments:
+            function_result = model(arguments['answer'])
+        else:
+            # Call the corresponding function with the arguments
+            function = function_mapping[function_name]
+            function_result = function.invoke(input = arguments)
+    else:
+        function_result = "Function not found in the mapping."
+
+    # Print the user response
+    print(function_result)
+    response = make_response(jsonify(function_result), 200)
+    return response
+
+    
+
+
 @app.route('/api/agent', methods=['POST'])
 def agent_system(query):#todo query raus
     # data = request.get_json()
