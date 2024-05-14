@@ -56,7 +56,7 @@ def llmCall(query):
     return result
 
 @app.route('/api/moodle', methods=['POST'])
-def llmCall(query):
+def llmCall2(query):
     data = request.get_json()
     query = data["prompt"]
 
@@ -141,6 +141,6 @@ def display_graph(graph):
         print(f"Failed to create or display graph: {e}")
 
 if __name__ == '__main__':
-    res = agent_system("Call Oersi and search for Generative KI.")
-    print(res)
+    # res = agent_system("Call Oersi and search for Generative KI.")
+    # print(res)
     app.run(debug=FLASK_DEBUG, ssl_context='adhoc')
