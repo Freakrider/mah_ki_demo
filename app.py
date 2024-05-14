@@ -112,60 +112,11 @@ def llmCall2():
         function_result = "Function not found in the mapping."
 
     # Print the user response
+    print(function_call)
+    print("_------------------_")
     print(function_result)
 
-    def format_to_markdown(results):
-        if "error" in results:
-            return f"**Error:** {results['error']} (Status Code: {results['status_code']})"
-
-        markdown_output = "# Search Results\n"
-        hits = results.get('hits', {}).get('hits', [])
-
-        for hit in hits:
-            source = hit.get('_source', {})
-            name = source.get('name', 'No Title')
-            description = source.get('description', 'No Description')
-            keywords = ', '.join(source.get('keywords', []))
-
-            markdown_output += f"## {name}\n\n"
-            markdown_output += f"**Description:** {description}\n\n"
-            markdown_output += f"**Keywords:** {keywords}\n\n"
-            markdown_output += "---\n\n"
-
-        return markdown_output
-    
-    formatted_markdown = format_to_markdown(function_result)
-
-    # LLM-Call
-    model = ChatOpenAI(
-        model_name="llama3:instruct",
-        openai_api_base="http://localhost:11434/v1",
-        temperature=0,
-        api_key="llama3:instruct"
-    )
-
-    # LLM-Call für die Ausgabe
-    response = model.invoke(input=formatted_markdown)
-    print(response)
-    # supervisor_template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
-    # You are a Presenter you should present the information from a function to the user in Markdown format.
-    
-    # Result from the function: {function_result}
-
-
-    # <|eot_id|><|start_header_id|>user<|end_header_id|>
-    # {input}
-    # <|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
-
-    # prompt = ChatPromptTemplate.from_messages([
-    #     ("system", supervisor_template),
-    #     MessagesPlaceholder(variable_name="input"),
-    #     (
-    #         "system",
-    #         "Given the conversation above use the result from the function und present it to the user?",
-    #     ),
-    # ]).partial(function_result=str(function_result))
-    respObj = {"response": response.content, "sourceDocuments": []}
+    respObj = {"response": function_result, "sourceDocuments": []}
     response = make_response(jsonify(respObj), 200)
     return response
 
