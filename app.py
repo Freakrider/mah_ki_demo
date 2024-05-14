@@ -1,15 +1,14 @@
 from flask import Flask, jsonify, make_response, request
 from flask_cors import CORS
-from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from tools import oersi_search
-from graph import create_workflow, stream_graph
-from IPython.display import Image, display
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_experimental.llms.ollama_functions import OllamaFunctions
 from langchain_core.utils.function_calling import convert_to_openai_function
+from langchain_core.messages import BaseMessage
+from langgraph.graph import END, MessageGraph
 
 from tools import final_answer_tool, oersi_search, save_as_txt
 
@@ -25,6 +24,12 @@ CORS(app, supports_credentials=True)
 
 @app.route('/api/plainoersi', methods=['POST'])
 def plainoersi():
+    """
+    Endpoint for searching OERSI based on a given prompt.
+
+    Returns:
+        A JSON response containing the search result.
+    """
     data = request.get_json()
     query = data["prompt"]
     search_result = oersi_search(query)
@@ -70,10 +75,6 @@ def agent_system():
         tools=tool_definitions
     )
 
-    from langchain_openai import ChatOpenAI
-    from langchain_core.messages import BaseMessage, HumanMessage
-    from langgraph.graph import END, MessageGraph
-
     graph = MessageGraph()
 
     graph.add_node("supervisor", model_with_function)
@@ -98,9 +99,8 @@ def agent_system():
 
     graph.add_conditional_edges("supervisor", router)
     runnable = graph.compile()
-    display_graph(runnable)
-
-
+    #from utility_function import display_graph
+    #display_graph(runnable)
 
     # Dictionary mapping function names to their corresponding functions
     function_mapping = {
@@ -257,20 +257,5 @@ def function_call_chain():
     response = make_response(jsonify(respObj), 200)
     return response
 
-
-def display_graph(graph):
-    graph_image_path = os.path.join("output", "graph_visualization.png")
-    try:
-        graph_image = graph.get_graph(xray=True).draw_mermaid_png()
-        with open(graph_image_path, "wb") as f:
-            f.write(graph_image)
-        display(Image(graph_image))  # Anzeigen des Graphen im Jupyter Notebook
-        print(f"Graph visualized and saved as PNG at '{graph_image_path}'")
-    except Exception as e:
-        print(f"Failed to create or display graph: {e}")
-
 if __name__ == '__main__':
-    # res = agent_system("Call Oersi and search for Generative KI.")
-    # print(res)
-    app.run(debug=FLASK_DEBUG)
-    # , ssl_context='adhoc'
+    app.run(debug=FLASK_DEBUG)# , ssl_context='adhoc' 

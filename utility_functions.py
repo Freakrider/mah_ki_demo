@@ -4,6 +4,8 @@ from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain_core.messages import BaseMessage, HumanMessage
 from langchain_experimental.llms.ollama_functions import OllamaFunctions
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from IPython.display import Image, display
+import os
 
 
 def validate_state(state: Dict[str, Any]) -> None:
@@ -65,3 +67,14 @@ def create_agent(llm: OllamaFunctions, tools: list, system_prompt: str):
     agent = create_openai_tools_agent(llm, tools, prompt)
     executor = AgentExecutor(agent=agent, tools=tools)
     return executor
+
+def display_graph(graph):
+    graph_image_path = os.path.join("output", "graph_visualization.png")
+    try:
+        graph_image = graph.get_graph(xray=True).draw_mermaid_png()
+        with open(graph_image_path, "wb") as f:
+            f.write(graph_image)
+        display(Image(graph_image))  #Display the graph image in Jupiter Notebook
+        print(f"Graph visualized and saved as PNG at '{graph_image_path}'")
+    except Exception as e:
+        print(f"Failed to create or display graph: {e}")
