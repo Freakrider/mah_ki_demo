@@ -165,9 +165,9 @@ def llmCall2():
     #         "Given the conversation above use the result from the function und present it to the user?",
     #     ),
     # ]).partial(function_result=str(function_result))
-    respObj = {"response": response, "sourceDocuments": []}
+    respObj = {"response": response.content, "sourceDocuments": []}
     response = make_response(jsonify(respObj), 200)
-    return "ol"
+    return response
 
     
 
