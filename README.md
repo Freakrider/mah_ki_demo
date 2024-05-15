@@ -59,7 +59,7 @@ Nach der Installation des Projekts können Sie den Flask-Server starten:
 flask run
 ```
 
-Stellen Sie sicher, dass das LLM / llama3 läuft, bevor Sie Anfragen an den Server stellen. Verwenden Sie [OLLAMA](https://ollama.com/) verwenden.
+Stellen Sie sicher, dass das LLM / llama3 läuft, bevor Sie Anfragen an den Server stellen. Verwenden Sie [OLLAMA](https://ollama.com/).
 
 ## Abhängigkeiten
 
