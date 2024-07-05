@@ -11,6 +11,8 @@
 ## Einführung
 
 `mah_ki_demo` **Bitte beachten Sie, dass es sich um einen simplen Prototyp für einen Vortrag handelt und dieser lediglich zu Lernzwecken dient. Eine Verwendung in Produktivumgebungen wird nicht empfohlen.**
+	
+Prototyp eines Innovatives Coaching-Tool, das in der Lage ist, Live-Feedback zu geben, Lern- und Entwicklungsprozesse zu unterstützen und Benutzer interaktiv durch verschiedene Szenarien zu führen. Work in Progress
 
 Um den Funktionsumfang zu gewährleisten, muss zusätzlich ein locales LLM laufen, mittels [OLLAMA](https://ollama.com/). 
 
